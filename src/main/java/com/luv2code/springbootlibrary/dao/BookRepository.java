@@ -12,4 +12,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     // available at: http://localhost:8080/api/books/search/findByTitleContaining{?title=}
     // the SAME as: select * from book where title:= title;
     Page<Book> findByTitleContaining(@RequestParam("title") String title, Pageable pageable);
+
+    // available at: http://localhost:8080/api/books/search/findByCategory{?category=}
+    // the SAME as: select * from book where category:= category;
+
+    Page<Book> findByCategory(@RequestParam("category") String category, Pageable pageable);
 }
