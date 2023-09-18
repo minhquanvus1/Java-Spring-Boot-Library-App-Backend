@@ -1,6 +1,6 @@
 package com.luv2code.springbootlibrary.service;
 
-import com.luv2code.springbootlibrary.dao.BookRepository;
+
 import com.luv2code.springbootlibrary.dao.ReviewRepository;
 import com.luv2code.springbootlibrary.entity.Review;
 import com.luv2code.springbootlibrary.requestmodels.ReviewRequest;
@@ -15,14 +15,12 @@ import java.time.LocalDate;
 @Transactional
 public class ReviewService {
 
-    private BookRepository bookRepository;
 
     private ReviewRepository reviewRepository;
 
     // constructor dependency injection
     @Autowired
-    public ReviewService(BookRepository bookRepository, ReviewRepository reviewRepository) {
-        this.bookRepository = bookRepository;
+    public ReviewService(ReviewRepository reviewRepository) {
         this.reviewRepository = reviewRepository;
     }
     public void postReview(String userEmail, ReviewRequest reviewRequest) throws Exception {
@@ -49,5 +47,17 @@ public class ReviewService {
         review.setDate(Date.valueOf(LocalDate.now()));
         // save Review object to review table in database
         reviewRepository.save(review);
+    }
+
+    // check if a user has made a review for a particular book
+    public boolean userReviewListed(String userEmail, Long bookId) {
+        Review validateReview = reviewRepository.findByUserEmailAndBookId(userEmail, bookId);
+        // this user has already made a review for this book
+        return validateReview != null;
+//        if(validateReview != null) {
+//            return true;
+//        } else {
+//            return false;
+//        }
     }
 }
