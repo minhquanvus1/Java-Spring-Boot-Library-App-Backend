@@ -13,4 +13,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // available at: http://localhost:8080/api/reviews/search/findByBookId{?book_id}
     // the SAME as: select * from review where book_id := book_id;
     Page<Review> findByBookId(@RequestParam("book_id") Long bookId, Pageable pageable);
+
+    Review findByUserEmailAndBookId(String userEmail, Long bookId);
 }
