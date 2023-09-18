@@ -51,4 +51,17 @@ public class BookService {
         // return the book object that user has just checked out
         return book.get();
     }
+
+    // function to check if a user has already checked out this book or not
+    public Boolean checkoutBookByUser(String userEmail, Long bookId) {
+        Checkout validateCheckout = checkoutRepository.findByUserEmailAndBookId(userEmail, bookId);
+
+        if(validateCheckout != null) {
+            // if this user has checked out this book
+            return true;
+        } else {
+            // if this user has not checked out this book yet
+            return false;
+        }
+    }
 }
