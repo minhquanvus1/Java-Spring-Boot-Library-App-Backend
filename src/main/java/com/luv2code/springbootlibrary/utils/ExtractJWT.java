@@ -7,7 +7,8 @@ import java.util.Map;
 public class ExtractJWT {
 
     // static function (can be called without object) to extract userEmail from "sub" in JWT
-    public static String payloadJWTExtraction(String token) {
+    // "extraction": is what we pass in that we want to search for, in this case, extraction = "sub"
+    public static String payloadJWTExtraction(String token, String extraction) {
 
         // this is a Bearer token --> it has "Bearer " as prefix --> need to exclude the "Bearer " part to get only the JWT
         token.replace("Bearer ", "");
@@ -33,7 +34,7 @@ public class ExtractJWT {
             String[] keyValue = entry.split(":");
 
             // check if there's an entry whose "key" == "sub" (this will hold the userEmail)
-            if (keyValue[0].equals("\"sub\"")) {
+            if (keyValue[0].equals(extraction)) {
 
                 // refer to 1 thing that needs to be removed from the "value" that contains userEmail, which is the ' " ' prefixed the userEmail
                 int remove = 1;
@@ -52,8 +53,8 @@ public class ExtractJWT {
             }
         }
         // if map contains key == "sub" --> take its value, which is the EXACT userEmail
-        if(map.containsKey("\"sub\"")) {
-            return map.get("\"sub\"");
+        if(map.containsKey(extraction)) {
+            return map.get(extraction);
         }
         return null;
     }
