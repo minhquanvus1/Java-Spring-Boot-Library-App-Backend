@@ -120,4 +120,26 @@ public class BookService {
         // return the list of ShelfCurrentLoansResponse objects (list of books (with daysLeft for each book), that this user is checking out/borrowing)
         return shelfCurrentLoansResponses;
     }
+
+    // function (a book service) that allows user to return a book that he has checked out/borrowed
+    public void returnBook(String userEmail, Long bookId) throws Exception {
+        // the "findById" method: return a Book object that has this id, then, this Book object will be wrapped/stored in an Optional object
+        Optional<Book> book = bookRepository.findById(bookId);
+        // find out if this user has really checked out this book
+        Checkout validateCheckout = checkoutRepository.findByUserEmailAndBookId(userEmail, bookId);
+
+        // check if the book with this bookId actually exists, or if this user has actually checked out this book
+        if(!book.isPresent() || validateCheckout == null) {
+            throw new Exception("Book does not exist, or not checked out by user");
+        }
+
+        // use: Optional.get(): to get the actual object stored in the Optional object (in this case, that is the Book object)
+        // increase the copies available of the returned book by 1
+        book.get().setCopiesAvailable(book.get().getCopiesAvailable() + 1);
+        // save the Book (with the updated attribute back to the book table in database)
+        bookRepository.save(book.get());
+
+        // delete the record for this book in the checkout table in database
+        checkoutRepository.deleteById(validateCheckout.getId());
+    }
 }
