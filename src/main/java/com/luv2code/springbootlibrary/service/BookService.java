@@ -142,4 +142,21 @@ public class BookService {
         // delete the record for this book in the checkout table in database
         checkoutRepository.deleteById(validateCheckout.getId());
     }
+
+    public void renewLoan(String userEmail, Long bookId) throws Exception {
+
+        Optional<Book> book = bookRepository.findById(bookId);
+        Checkout validateCheckout = checkoutRepository.findByUserEmailAndBookId(userEmail, bookId);
+        if(!book.isPresent()|| validateCheckout == null) {
+            throw new Exception("Book does not exist, or not checked out by user");
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date d1 = sdf.parse(validateCheckout.getReturnDate()); // return date
+        Date d2 = sdf.parse(LocalDate.now().toString()); // today
+        // if return date > today, or return date == today (not pass/exceed the return due date yet) --> allow user to renew the loan (extend 7 more days from today)
+        if(d1.compareTo(d2) > 0 || d1.compareTo(d2) == 0) {
+            validateCheckout.setReturnDate(LocalDate.now().plusDays(7).toString()); // convert to String, because the returnDate in Checkout object is of type String (which we will pass as parameter to the setReturnDate() method)
+            checkoutRepository.save(validateCheckout); // save this new checkout object (with the new return date) to the checkout table in database
+        }
+    }
 }
