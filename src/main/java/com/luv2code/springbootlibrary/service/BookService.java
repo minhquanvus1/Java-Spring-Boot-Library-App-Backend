@@ -3,8 +3,10 @@ package com.luv2code.springbootlibrary.service;
 
 import com.luv2code.springbootlibrary.dao.BookRepository;
 import com.luv2code.springbootlibrary.dao.CheckoutRepository;
+import com.luv2code.springbootlibrary.dao.HistoryRepository;
 import com.luv2code.springbootlibrary.entity.Book;
 import com.luv2code.springbootlibrary.entity.Checkout;
+import com.luv2code.springbootlibrary.entity.History;
 import com.luv2code.springbootlibrary.responsemodels.ShelfCurrentLoansResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,16 +20,19 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@Transactional
+@Transactional // all methods in this class are TRANSACTIONAL (either successfuly, or fail (and roll back the whole method to the previous state right before the method, if any thing in the method(transaction) fails))
 public class BookService {
 
     private BookRepository bookRepository;
     private CheckoutRepository checkoutRepository;
 
+    private HistoryRepository historyRepository;
+
     // construcor dependency injection
-    public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository) {
+    public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository) {
         this.bookRepository = bookRepository;
         this.checkoutRepository = checkoutRepository;
+        this.historyRepository = historyRepository;
     }
 
     // create a book checkout service that takes in userEmail, bookId as parameter, and return the Book that he wants to check out
@@ -141,6 +146,20 @@ public class BookService {
 
         // delete the record for this book in the checkout table in database
         checkoutRepository.deleteById(validateCheckout.getId());
+
+        // we want that: History section will store the list of books that a user has returned (after borrowing/checking out for a while)
+        // ---> Right after the returning process, we initialize a History object (containing infor about the returned book), and save this History object into history table in database
+        History history = new History(
+                userEmail,
+                validateCheckout.getCheckoutDate(),
+                //validateCheckout.getReturnDate(), // this is not suitable, because user may return a book earlier than return due date. But we want to get the ACTUAL returned date of the book --> so it must be Localdate.now() which is at the present
+                LocalDate.now().toString(),
+                book.get().getTitle(),
+                book.get().getAuthor(),
+                book.get().getDescription(),
+                book.get().getImg()
+        );
+        historyRepository.save(history); // store this History object in history table in database
     }
 
     public void renewLoan(String userEmail, Long bookId) throws Exception {
