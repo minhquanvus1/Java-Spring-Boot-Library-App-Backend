@@ -48,7 +48,7 @@ public class BookController {
     }
     @PutMapping("secure/return")
     // use 'PUT' because when user returns a book, we will UPDATE the existing data in database
-    public void returnBook(@RequestHeader(value = "Authorization") String token, Long bookId) throws Exception {
+    public void returnBook(@RequestHeader(value = "Authorization") String token, @RequestParam Long bookId) throws Exception {
         String userEmail = ExtractJWT.payloadJWTExtraction(token, "\"sub\"");
         bookService.returnBook(userEmail, bookId);
 
