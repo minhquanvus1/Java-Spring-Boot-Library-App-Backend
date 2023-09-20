@@ -1,6 +1,7 @@
 package com.luv2code.springbootlibrary.config;
 
 import com.luv2code.springbootlibrary.entity.Book;
+import com.luv2code.springbootlibrary.entity.Message;
 import com.luv2code.springbootlibrary.entity.Review;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -22,11 +23,14 @@ public class MyDataRestConfig implements RepositoryRestConfigurer {
         HttpMethod[] theUnsupportedMethods = {HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH};
         disableHttpMethods(Book.class, config, theUnsupportedMethods);
         disableHttpMethods(Review.class, config, theUnsupportedMethods);
+        disableHttpMethods(Message.class, config, theUnsupportedMethods);
 
 
         // expose "id" field for Book entity
         config.exposeIdsFor(Book.class);
         config.exposeIdsFor(Review.class);
+        config.exposeIdsFor(Message.class);
+
 
 
         // configure CORS Mapping for Spring Data Rest
