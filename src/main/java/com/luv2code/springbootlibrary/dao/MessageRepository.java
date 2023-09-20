@@ -13,4 +13,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     // available at: http://localhost:8080/api/messages/search/findByUserEmail?userEmail={userEmail}
     // return list of all messages (Message objects) sent by a user with a particular userEmail
     Page<Message> findByUserEmail(@RequestParam("user_email") String userEmail, Pageable pageable);
+
+    Page<Message> findByClosed(@RequestParam("closed") boolean closed, Pageable pageable);
 }
