@@ -1,6 +1,8 @@
 package com.luv2code.springbootlibrary.service;
 
 import com.luv2code.springbootlibrary.dao.BookRepository;
+import com.luv2code.springbootlibrary.dao.CheckoutRepository;
+import com.luv2code.springbootlibrary.dao.ReviewRepository;
 import com.luv2code.springbootlibrary.entity.Book;
 import com.luv2code.springbootlibrary.requestmodels.AddBookRequest;
 import org.springframework.stereotype.Service;
@@ -14,9 +16,15 @@ public class AdminService {
 
     private BookRepository bookRepository;
 
+    private CheckoutRepository checkoutRepository;
+
+    private ReviewRepository reviewRepository;
+
     // constructor dependency injection
-    public AdminService(BookRepository bookRepository) {
+    public AdminService(BookRepository bookRepository, CheckoutRepository checkoutRepository, ReviewRepository reviewRepository) {
         this.bookRepository = bookRepository;
+        this.checkoutRepository = checkoutRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     public void postBook(AddBookRequest addBookRequest) {
@@ -59,5 +67,20 @@ public class AdminService {
         book.get().setCopiesAvailable(book.get().getCopiesAvailable() - 1);
         // save this book with the updated data back to the database
         bookRepository.save(book.get());
+    }
+
+    public void deleteBook(Long bookId) throws Exception {
+        // check if this book actually exists in the database (because we can't delete a book that does not exist in our database)
+        Optional<Book> book = bookRepository.findById(bookId);
+        // if this book to be deleted not exist, throw error
+        if(!book.isPresent()) {
+            throw new Exception("Book does not exist");
+        }
+        // delete record of this book in book table in database
+        bookRepository.delete(book.get());
+
+        // also, delete all records having this book_id in checkout, review table in database
+        checkoutRepository.deleteAllByBookId(bookId);
+        reviewRepository.deleteAllByBookId(bookId);
     }
 }
