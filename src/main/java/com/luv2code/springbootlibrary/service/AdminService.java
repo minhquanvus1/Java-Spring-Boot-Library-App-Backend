@@ -24,6 +24,7 @@ public class AdminService {
         book.setCopies(addBookRequest.getCopies());
         book.setCopiesAvailable(addBookRequest.getCopies());
         book.setImg(addBookRequest.getImg());
+        book.setAuthor(addBookRequest.getAuthor());
         book.setCategory(addBookRequest.getCategory());
 
         bookRepository.save(book);
