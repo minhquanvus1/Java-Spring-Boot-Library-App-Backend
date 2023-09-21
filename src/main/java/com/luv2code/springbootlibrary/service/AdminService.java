@@ -46,4 +46,18 @@ public class AdminService {
         // remember to save this book (with updated infor) back to the database
         bookRepository.save(book.get());
     }
+
+    // create a function to allow admin to decrease quantity of a book
+    public void decreaseBookQuantity(Long bookId) throws Exception {
+        // check if this book actually exists in the database (because we can't decrease quantity of a book that does not exist in our databse)
+        Optional<Book> book = bookRepository.findById(bookId);
+        // if this book does not exist, or its current total copies == 0 (het hang), or its current total copiesAvailable == 0 (sach nay da cho muon het roi)
+        if(!book.isPresent() || book.get().getCopies() <= 0 || book.get().getCopiesAvailable() <= 0) {
+            throw new Exception("Book does not exist, or quantity locked");
+        }
+        book.get().setCopies(book.get().getCopies() - 1);
+        book.get().setCopiesAvailable(book.get().getCopiesAvailable() - 1);
+        // save this book with the updated data back to the database
+        bookRepository.save(book.get());
+    }
 }
