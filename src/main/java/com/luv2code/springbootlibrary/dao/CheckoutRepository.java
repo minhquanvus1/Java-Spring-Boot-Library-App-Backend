@@ -21,7 +21,7 @@ public interface CheckoutRepository extends JpaRepository<Checkout, Long> {
     List<Checkout> findBooksByUserEmail(String email);
 
     @Modifying // add @Modidying annotation: because we're deleting records in database --> we're adding a query to MODIFY the database
-    @Query("delete from checkout where book_id := book_id")
+    @Query("delete from Checkout where bookId in :book_id")
     // here, we want that: if admin deletes a book, then we want to delete all records in checkout table whose book_id == book_id of this book
     void deleteAllByBookId(@Param("book_id") Long bookId);
 }

@@ -20,7 +20,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Review findByUserEmailAndBookId(String userEmail, Long bookId);
 
     @Modifying // add @Modidying annotation: because we're deleting records in database --> we're adding a query to MODIFY the database
-    @Query("delete from review where book_id = book_id")
+    @Query("delete from Review where bookId in :book_id")
         // here, we want that: if admin deletes a book, then we want to delete all records in review table whose book_id == book_id of this book
     void deleteAllByBookId(@Param("book_id") Long book_id);
 }
