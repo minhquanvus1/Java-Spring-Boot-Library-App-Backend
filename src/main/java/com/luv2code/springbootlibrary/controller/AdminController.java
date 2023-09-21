@@ -37,4 +37,14 @@ public class AdminController {
 
         adminService.increaseBookQuantity(bookId);
     }
+
+    @PutMapping("/secure/decrease/book/quantity")
+    public void decreaseBookQuantity(@RequestHeader(value = "Authorization") String token, @RequestParam Long bookId) throws Exception {
+        // check if the user calls this API is actually the admin
+        String admin = ExtractJWT.payloadJWTExtraction(token, "\"userType\"");
+        if(admin == null || !admin.equals("admin")) {
+            throw new Exception("Administraction page only!");
+        }
+        adminService.decreaseBookQuantity(bookId);
+    }
 }
