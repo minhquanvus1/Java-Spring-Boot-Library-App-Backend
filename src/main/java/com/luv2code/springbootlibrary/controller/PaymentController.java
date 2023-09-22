@@ -2,6 +2,7 @@ package com.luv2code.springbootlibrary.controller;
 
 import com.luv2code.springbootlibrary.requestmodels.PaymentInfoRequest;
 import com.luv2code.springbootlibrary.service.PaymentService;
+import com.luv2code.springbootlibrary.utils.ExtractJWT;
 import com.stripe.model.PaymentIntent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,5 +29,16 @@ public class PaymentController {
         String paymentStr = paymentIntent.toJson();
         // return a ResponseEntity object, with paymentStr (of type String) as response body, and http status OK (200)
         return new ResponseEntity<>(paymentStr, HttpStatus.OK);
+    }
+
+    @PutMapping("/payment-complete")
+    public ResponseEntity<String> stripePaymentComplete(@RequestHeader(value = "Authorization") String token) throws Exception {
+        // check if this user is authenticated or not (because only authenticated user can call this API)
+        String userEmail = ExtractJWT.payloadJWTExtraction(token, "\"sub\"");
+        if(userEmail == null) {
+            throw new Exception("User email is missing!");
+        }
+        // because the stripePayment(userEmail) method returns a ResponseEntity object, with a response body of type String, so we can use this method as the return in this function
+        return paymentService.stripePayment(userEmail);
     }
 }
