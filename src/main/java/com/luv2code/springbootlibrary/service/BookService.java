@@ -4,9 +4,11 @@ package com.luv2code.springbootlibrary.service;
 import com.luv2code.springbootlibrary.dao.BookRepository;
 import com.luv2code.springbootlibrary.dao.CheckoutRepository;
 import com.luv2code.springbootlibrary.dao.HistoryRepository;
+import com.luv2code.springbootlibrary.dao.PaymentRepository;
 import com.luv2code.springbootlibrary.entity.Book;
 import com.luv2code.springbootlibrary.entity.Checkout;
 import com.luv2code.springbootlibrary.entity.History;
+import com.luv2code.springbootlibrary.entity.Payment;
 import com.luv2code.springbootlibrary.responsemodels.ShelfCurrentLoansResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +30,14 @@ public class BookService {
 
     private HistoryRepository historyRepository;
 
+    private PaymentRepository paymentRepository;
+
     // construcor dependency injection
-    public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository) {
+    public BookService(BookRepository bookRepository, CheckoutRepository checkoutRepository, HistoryRepository historyRepository, PaymentRepository paymentRepository) {
         this.bookRepository = bookRepository;
         this.checkoutRepository = checkoutRepository;
         this.historyRepository = historyRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     // create a book checkout service that takes in userEmail, bookId as parameter, and return the Book that he wants to check out
@@ -48,6 +53,44 @@ public class BookService {
         // Case 1: user can NOT check out this book: the book DNExist in book table, the user has ALREADY checked out 1 copy of the book, the book has run out of copies to be checked out
         if(!book.isPresent() || validateCheckout != null || book.get().getCopiesAvailable() <= 0) {
             throw new Exception("Book does not exist, or already checked out by user");
+        }
+        // return a list of Checkout objects, which are the books that this user is borrowing/checking out (has not returned yet, because if the user has returned this book, we will delete the record relating to his email address in the checkout table)
+        List<Checkout> currentBooksCheckedOut = checkoutRepository.findBooksByUserEmail(userEmail);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        boolean booksNeedReturned = false;
+
+        // use for loop to iterate through each Checkout object in this list of Checkout objects, to see which book is over due (if this book is over due, then break out of the for loop)
+        for(Checkout checkout : currentBooksCheckedOut) {
+            // expected return date
+            Date d1 = sdf.parse(checkout.getReturnDate());
+            // at the present (today)
+            Date d2 = sdf.parse(LocalDate.now().toString());
+
+            TimeUnit time = TimeUnit.DAYS;
+            double differenceInTime = time.convert(d1.getTime() - d2.getTime(), TimeUnit.MILLISECONDS);
+
+            // if expected return date < today  --> this book has OVER DUE
+            if(differenceInTime < 0) {
+                booksNeedReturned = true; // this book NEEDS TO BE RETURNED
+                break; // break out of the innermost loop (here, which is the for loop)
+            }
+        }
+        // return a Payment object relating to this user
+        Payment userPayment = paymentRepository.findByUserEmail(userEmail);
+
+        // if this user's payment is already in payment table, and the amount > 0, OR this user's payment is already in payment table, and this book needs to be returned is true --> then, announce that this user has to pay fee before being able to proceed the below code to checkout another book
+        // so, there are 2 situations where a user can't checkout a book: 1. this user has not paid the fee for his last over-due book (userPayment != null), and this fee/amount must be > 0 (if amount == 0, this means this user has already paid the fee, so he can checkout normally). 2. This user has already paid the fee/amount for his last over-due book (userEmail != 0, so amount can be == 0), but this book-the book he's borrowing, is overdue (expected return date < today)
+        if((userPayment != null && userPayment.getAmount() > 0) || (userPayment != null && booksNeedReturned)) {
+            throw new Exception("Outstanding fees");
+        }
+        // if this user's payment is not in the payment table yet (this is the 1st time this user has an over-due book)
+        if(userPayment == null) {
+            Payment payment = new Payment();
+            payment.setAmount(0.00);
+            payment.setUserEmail(userEmail);
+            // create a new Payment object for this user, and save it to payment table in database
+            paymentRepository.save(payment);
         }
         // Case 2: user can check out 1 copy of this book
         // reduce the number of copies by 1
@@ -144,6 +187,20 @@ public class BookService {
         // save the Book (with the updated attribute back to the book table in database)
         bookRepository.save(book.get());
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        TimeUnit time = TimeUnit.DAYS;
+
+        Date d1 = sdf.parse(validateCheckout.getReturnDate());
+        Date d2 = sdf.parse(LocalDate.now().toString());
+
+        double differenceInTime = time.convert(d1.getTime() - d2.getTime(), TimeUnit.MILLISECONDS);
+
+        if(differenceInTime < 0) {
+            Payment payment = paymentRepository.findByUserEmail(userEmail);
+            payment.setAmount(payment.getAmount() + (differenceInTime * (-1)));
+            paymentRepository.save(payment);
+        }
         // delete the record for this book in the checkout table in database
         checkoutRepository.deleteById(validateCheckout.getId());
 
